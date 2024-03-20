@@ -14,27 +14,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Validate and sanitize input
     $username = validate($_POST['username']);
     $password = validate($_POST['password']);
-    $Email = strtolower(validate($_POST['Email']));
-    $First_name = validate($_POST['First_name']);
-    $Middle_name = validate($_POST['Middle_name']);
-    $Lastname = validate($_POST['Lastname']);
+    $email = strtolower(validate($_POST['email']));
+    $first_name = validate($_POST['first_name']);
+    $middle_name = validate($_POST['middle_name']);
+    $lastname = validate($_POST['lastname']);
+
+    // Check if email is valid
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['status'] = "Invalid email address format. Please provide a valid email address.";
+        header("Location: signup.php");
+        exit();
+    }
 
     // Check if email already exists
-    $check_email_query = "SELECT email FROM user WHERE LOWER(email) = '$Email' LIMIT 1";
+    $check_email_query = "SELECT email FROM user WHERE LOWER(email) = '$email' LIMIT 1";
     $check_email_query_run = mysqli_query($conn, $check_email_query);
 
     if (mysqli_num_rows($check_email_query_run) > 0) {
-        $_SESSION['status'] = "Email ID already exists PLEASE INPUT ANOTHER";
+        $_SESSION['status'] = "Email ID already exists. Please use another email address.";
         header("Location: signup.php");
         exit();
     }
 
     // Insert user into database
-    if (empty($username) || empty($password) || empty($Email) || empty($First_name) || empty($Lastname)) {
+    if (empty($username) || empty($password) || empty($email) || empty($first_name) || empty($lastname)) {
         header("Location: signup.php?error=All fields are required");
         exit();
     } else {
-        $sql = "INSERT INTO user (username, password, email, First_name, Middle_name, Lastname) VALUES ('$username', '$password' , '$Email', '$First_name', '$Middle_name', '$Lastname')";
+        $sql = "INSERT INTO user (username, password, email, First_name, Middle_name, Lastname) VALUES ('$username', '$password' , '$email', '$first_name', '$middle_name', '$lastname')";
 
         if (mysqli_query($conn, $sql)) {
             header("Location: loginform.php?success=User registered successfully");
@@ -98,20 +105,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <input type="password" class="form-control" id="password" name="password" placeholder="Password">
                     </div>
                     <div class="form-group">
-                        <label for="Email">Email Address</label>  
-                        <input type="email" class="form-control" id="Email" name="Email" placeholder="Email Address" required="required">
+                        <label for="email">Email Address</label>  
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Email Address" required="required">
                     </div>
                     <div class="form-group">
-                        <label for="First_name">First Name</label>
-                        <input type="text" class="form-control" id="First_name" name="First_name" placeholder="First Name" required="required">
+                        <label for="first_name">First Name</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First Name" required="required">
                     </div>
                     <div class="form-group">
-                        <label for="Middle_name">Middle Name</label>
-                        <input type="text" class="form-control" id="Middle_name" name="Middle_name" placeholder="Middle Name">
+                        <label for="middle_name">Middle Name</label>
+                        <input type="text" class="form-control" id="middle_name" name="middle_name" placeholder="Middle Name">
                     </div>
                     <div class="form-group">
-                        <label for="Lastname">Last Name</label>
-                        <input type="text" class="form-control" id="Lastname" name="Lastname" placeholder="Last Name" required="required">
+                        <label for="lastname">Last Name</label>
+                        <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last Name" required="required">
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Signup</button>
                 </form>
