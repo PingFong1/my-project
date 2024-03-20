@@ -57,3 +57,85 @@
     </div>
 </body>
 </html>
+<?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+session_start();
+include "db_conn.php";
+require 'vendor/autoload.php'; // Include PHPMailer autoloader
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  
+    function validate($data){
+        $data = trim($data);
+        $data = stripslashes($data);
+        $data = htmlspecialchars($data);
+        return $data;
+    }
+
+    // Validate and sanitize input
+    $username = validate($_POST['username']);
+    $password = validate($_POST['password']);
+    $Email = strtolower(validate($_POST['Email']));
+    $First_name = validate($_POST['First_name']);
+    $Middle_name = validate($_POST['Middle_name']);
+    $Lastname = validate($_POST['Lastname']);
+
+    // Check if email already exists
+    $check_email_query = "SELECT email FROM user WHERE LOWER(email) = '$Email' LIMIT 1";
+    $check_email_query_run = mysqli_query($conn, $check_email_query);
+
+    if (mysqli_num_rows($check_email_query_run) > 0) {
+        $_SESSION['status'] = "Email ID already exists PLEASE INPUT ANOTHER";
+        header("Location: signup.php");
+        exit();
+    }
+
+    // Generate verification code
+    $verification_code = mt_rand(100000, 999999); // Generate a random 6-digit code
+
+    // Send verification email
+    $mail = new PHPMailer(true);
+    try {
+        //Server settings
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'your_gmail_username@gmail.com'; // Your Gmail username
+        $mail->Password   = 'your_gmail_password'; // Your Gmail password
+        $mail->SMTPSecure = 'tls';
+        $mail->Port       = 587;
+
+        //Recipients
+        $mail->setFrom('your_gmail_username@gmail.com', 'Your Name'); // Your Gmail username and your name
+        $mail->addAddress($Email); // Recipient email
+
+        //Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Verification Code';
+        $mail->Body    = 'Your verification code is: ' . $verification_code;
+
+        $mail->send();
+        echo 'Verification code sent successfully!';
+    } catch (Exception $e) {
+        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+    }
+
+    // Insert user into database
+    if (empty($username) || empty($password) || empty($Email) || empty($First_name) || empty($Lastname)) {
+        header("Location: signup.php?error=All fields are required");
+        exit();
+    } else {
+        $sql = "INSERT INTO user (username, password, email, First_name, Middle_name, Lastname) VALUES ('$username', '$password' , '$Email', '$First_name', '$Middle_name', '$Lastname')";
+
+        if (mysqli_query($conn, $sql)) {
+            header("Location: loginform.php?success=User registered successfully");
+            exit();
+        } else {
+            header("Location: signup.php?error=Error occurred while registering user");
+            exit();
+        }
+    }
+}
+?>
